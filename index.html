@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JOJOone</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="JOJOone">
+<meta property="og:url" content="https://josephcarmichael.github.io/JOJOone/">
+<meta property="og:image" content="https://josephcarmichael.github.io/JOJOone/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#e0a526">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+/* One screen: the 15-second gameplay loop behind the title, a winged sun above it and a
+   download cartouche below. The art is pixel blocks in the colours of Tutankhamun's mask,
+   gold and lapis lazuli. The page is the same in light and dark mode, because the footage is. */
+:root {
+  --night: #0c0905;
+  --gold: #f2c445;
+  --gold-hi: #ffe27a;
+  --glow: rgba(255, 196, 84, .55);
+  --ink: rgba(10, 7, 3, .38);
+  --rise: cubic-bezier(.2, .7, .2, 1);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { overflow: hidden; background: var(--night) url("media/poster.jpg") center / cover no-repeat; -webkit-tap-highlight-color: transparent; }
+
+.bg { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+/* Darken the middle a little for the title and the edges a little more, so any frame reads. */
+.shade { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 46% at 50% 48%, rgba(12, 8, 3, .40), rgba(12, 8, 3, 0) 72%),
+    radial-gradient(ellipse 120% 100% at 50% 50%, rgba(8, 5, 2, 0) 55%, rgba(8, 5, 2, .5) 100%),
+    linear-gradient(rgba(8, 5, 2, .3), rgba(8, 5, 2, 0) 24%, rgba(8, 5, 2, 0) 74%, rgba(8, 5, 2, .4)); }
+
+main { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(12px, 3.4vh, 36px); padding: 16px; padding-bottom: calc(16px + 4vh); }
+main > * { animation: rise 1.4s var(--rise) both; }
+h1 { margin: 0; line-height: 0; animation-delay: .25s; }
+.sun { display: block; width: min(60vw, 660px, 95vh); height: auto; overflow: visible;
+  filter: drop-shadow(0 .5vh .9vh rgba(0, 0, 0, .55)); animation-delay: .05s; }
+.logo { display: block; width: min(88vw, 1100px, 150vh); height: auto; overflow: visible;
+  filter: drop-shadow(0 .7vh 1.4vh rgba(0, 0, 0, .6)); }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+.sun-glow { transform-box: fill-box; transform-origin: center; animation: glow 4.5s ease-in-out infinite alternate; }
+@keyframes glow { from { opacity: .45; transform: scale(.9); } to { opacity: 1; transform: scale(1.08); } }
+.logo-shine { animation: shine 8s ease-in-out 2s infinite; }
+@keyframes shine { from { transform: translateX(0) skewX(-20deg); } 16%, to { transform: translateX(96px) skewX(-20deg); } }
+
+.get { display: block; width: clamp(54px, 5vw, 84px); outline: none; animation-delay: .55s; border-radius: 6px; }
+.get-icon { display: block; width: 100%; height: auto; overflow: visible; transition: transform .25s var(--rise), filter .25s;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .6)); }
+.get:hover .get-icon, .get:focus-visible .get-icon { transform: translateY(-3px);
+  filter: brightness(1.12) drop-shadow(0 0 14px var(--glow)) drop-shadow(0 4px 8px rgba(0, 0, 0, .6)); }
+.get:hover .px-y, .get:focus-visible .px-y { animation: bob 1s ease-in-out infinite; }
+.get:active .get-icon { transform: translateY(0); }
+@keyframes bob { 50% { transform: translateY(1px); } }
+.get:focus-visible { box-shadow: 0 0 0 3px var(--night), 0 0 0 5px var(--gold-hi); }
+
+.sound { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
+  display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--ink); cursor: pointer; opacity: .8; transition: opacity .2s, background .2s; animation: rise 1.4s var(--rise) .9s both; }
+.sound:hover, .sound:focus-visible { opacity: 1; background: rgba(10, 7, 3, .6); }
+.sound:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.sound svg { width: 26px; height: auto; }
+.sound[aria-pressed="true"] .sound-off, .sound[aria-pressed="false"] .sound-on { display: none; }
+.sound.hint { animation: rise 1.4s var(--rise) .9s both, hint 2.6s ease-in-out 2.5s infinite; }
+@keyframes hint { 50% { box-shadow: 0 0 0 7px rgba(242, 196, 69, .22); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<video class="bg" autoplay muted loop playsinline preload="auto" poster="media/poster.jpg"
+       disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1">
+  <source src="media/loop-av1.mp4" type='video/mp4; codecs="av01.0.08M.10"'>
+  <source src="media/loop-h264.mp4" type='video/mp4; codecs="avc1.640029"'>
+</video>
+<script>
+  // Visitors who ask for less motion or less data keep the still poster instead of the loop.
+  (function () {
+    var video = document.querySelector(".bg");
+    var saveData = navigator.connection && navigator.connection.saveData;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches || saveData) {
+      video.removeAttribute("autoplay");
+      video.querySelectorAll("source").forEach(function (source) { source.remove(); });
+      video.load();
+      video.dataset.still = "";
+    }
+  })();
+</script>
+<div class="shade" aria-hidden="true"></div>
+
+<main>
+  <!-- art:sun --><svg class="sun" viewBox="0 0 69 13" aria-hidden="true" focusable="false"><defs><radialGradient id="sun-glow"><stop offset="0" stop-color="#ffb347" stop-opacity=".85"/><stop offset=".45" stop-color="#ff8a3d" stop-opacity=".35"/><stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient></defs><circle class="sun-glow" cx="34.5" cy="6.5" r="11.7" fill="url(#sun-glow)"/><path class="px-g" fill="#f2c445" d="M33 1h3v1h-3zM31 2h2v1h-2zM36 2h2v1h-2zM2 3h27v1h-27zM30 3h1v1h-1zM38 3h1v1h-1zM40 3h27v1h-27zM30 4h1v1h-1zM38 4h1v1h-1zM4 5h24v1h-24zM29 5h1v1h-1zM39 5h1v1h-1zM41 5h24v1h-24zM29 6h1v1h-1zM39 6h1v1h-1zM29 7h1v1h-1zM39 7h1v1h-1zM30 8h1v1h-1zM38 8h1v1h-1zM16 9h13v1h-13zM30 9h1v1h-1zM38 9h1v1h-1zM40 9h13v1h-13zM31 10h2v1h-2zM36 10h2v1h-2zM33 11h3v1h-3z"/><path class="px-o" fill="#ff9a5a" d="M32 3h2v1h-2zM31 4h3v1h-3zM31 5h3v1h-3z"/><path class="px-r" fill="#c8361d" d="M33 2h3v1h-3zM31 3h1v1h-1zM34 3h4v1h-4zM34 4h4v1h-4zM30 5h1v1h-1zM34 5h5v1h-5zM30 6h9v1h-9zM30 7h9v1h-9zM31 8h7v1h-7zM31 9h7v1h-7zM33 10h3v1h-3z"/><path class="px-l" fill="#2147a8" d="M3 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM13 4h1v1h-1zM15 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM23 4h1v1h-1zM25 4h1v1h-1zM27 4h1v1h-1zM41 4h1v1h-1zM43 4h1v1h-1zM45 4h1v1h-1zM47 4h1v1h-1zM49 4h1v1h-1zM51 4h1v1h-1zM53 4h1v1h-1zM55 4h1v1h-1zM57 4h1v1h-1zM59 4h1v1h-1zM61 4h1v1h-1zM63 4h1v1h-1zM65 4h1v1h-1zM6 6h22v1h-22zM41 6h22v1h-22zM13 8h16v1h-16zM40 8h16v1h-16zM23 11h6v1h-6zM40 11h6v1h-6z"/><path class="px-t" fill="#2fb6a8" d="M4 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM16 4h1v1h-1zM18 4h1v1h-1zM20 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM26 4h1v1h-1zM28 4h1v1h-1zM40 4h1v1h-1zM42 4h1v1h-1zM44 4h1v1h-1zM46 4h1v1h-1zM48 4h1v1h-1zM50 4h1v1h-1zM52 4h1v1h-1zM54 4h1v1h-1zM56 4h1v1h-1zM58 4h1v1h-1zM60 4h1v1h-1zM62 4h1v1h-1zM64 4h1v1h-1zM9 7h19v1h-19zM41 7h19v1h-19zM20 10h9v1h-9zM40 10h9v1h-9z"/><path class="px-k" fill="#1a1206" d="M33 0h3v1h-3zM31 1h2v1h-2zM36 1h2v1h-2zM2 2h27v1h-27zM30 2h1v1h-1zM38 2h1v1h-1zM40 2h27v1h-27zM1 3h1v1h-1zM29 3h1v1h-1zM39 3h1v1h-1zM67 3h1v1h-1zM2 4h1v1h-1zM29 4h1v1h-1zM39 4h1v1h-1zM66 4h1v1h-1zM3 5h1v1h-1zM28 5h1v1h-1zM40 5h1v1h-1zM65 5h1v1h-1zM4 6h2v1h-2zM28 6h1v1h-1zM40 6h1v1h-1zM63 6h2v1h-2zM6 7h3v1h-3zM28 7h1v1h-1zM40 7h1v1h-1zM60 7h3v1h-3zM9 8h4v1h-4zM29 8h1v1h-1zM39 8h1v1h-1zM56 8h4v1h-4zM13 9h3v1h-3zM29 9h1v1h-1zM39 9h1v1h-1zM53 9h3v1h-3zM16 10h4v1h-4zM29 10h2v1h-2zM38 10h2v1h-2zM49 10h4v1h-4zM20 11h3v1h-3zM29 11h1v1h-1zM31 11h2v1h-2zM36 11h2v1h-2zM39 11h1v1h-1zM46 11h3v1h-3zM23 12h6v1h-6zM33 12h3v1h-3zM40 12h6v1h-6z"/></svg><!-- /art:sun -->
+  <h1><!-- art:logo --><svg class="logo" viewBox="-0.6 -0.6 66.5 12.3" role="img" aria-labelledby="logo-name">
+      <title id="logo-name">JOJOone</title>
+      <defs>
+        <path id="logo-glyphs" d="M1 0h7v1h-7zM12 0h4v1h-4zM21 0h7v1h-7zM32 0h4v1h-4zM1 1h7v1h-7zM11 1h6v1h-6zM21 1h7v1h-7zM31 1h6v1h-6zM5 2h2v1h-2zM10 2h3v1h-3zM15 2h3v1h-3zM25 2h2v1h-2zM30 2h3v1h-3zM35 2h3v1h-3zM5 3h2v1h-2zM10 3h2v1h-2zM16 3h2v1h-2zM25 3h2v1h-2zM30 3h2v1h-2zM36 3h2v1h-2zM42 3h3v1h-3zM49 3h2v1h-2zM52 3h3v1h-3zM60 3h3v1h-3zM5 4h2v1h-2zM10 4h2v1h-2zM16 4h2v1h-2zM25 4h2v1h-2zM30 4h2v1h-2zM36 4h2v1h-2zM41 4h5v1h-5zM49 4h7v1h-7zM59 4h5v1h-5zM5 5h2v1h-2zM10 5h2v1h-2zM16 5h2v1h-2zM25 5h2v1h-2zM30 5h2v1h-2zM36 5h2v1h-2zM40 5h2v1h-2zM45 5h2v1h-2zM49 5h3v1h-3zM54 5h2v1h-2zM58 5h2v1h-2zM63 5h2v1h-2zM0 6h2v1h-2zM5 6h2v1h-2zM10 6h2v1h-2zM16 6h2v1h-2zM20 6h2v1h-2zM25 6h2v1h-2zM30 6h2v1h-2zM36 6h2v1h-2zM40 6h2v1h-2zM45 6h2v1h-2zM49 6h2v1h-2zM54 6h2v1h-2zM58 6h7v1h-7zM0 7h2v1h-2zM5 7h2v1h-2zM10 7h3v1h-3zM15 7h3v1h-3zM20 7h2v1h-2zM25 7h2v1h-2zM30 7h3v1h-3zM35 7h3v1h-3zM40 7h2v1h-2zM45 7h2v1h-2zM49 7h2v1h-2zM54 7h2v1h-2zM58 7h2v1h-2zM0 8h7v1h-7zM11 8h6v1h-6zM20 8h7v1h-7zM31 8h6v1h-6zM41 8h5v1h-5zM49 8h2v1h-2zM54 8h2v1h-2zM59 8h6v1h-6zM1 9h5v1h-5zM12 9h4v1h-4zM21 9h5v1h-5zM32 9h4v1h-4zM42 9h3v1h-3zM49 9h2v1h-2zM54 9h2v1h-2zM60 9h4v1h-4z"/>
+        <clipPath id="logo-face"><use href="#logo-glyphs"/></clipPath>
+        <clipPath id="logo-inner"><use href="#logo-glyphs" x="0.2" y="0.2"/></clipPath>
+        <linearGradient id="logo-gold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="10">
+          <stop offset="0" stop-color="#ffefa6"/><stop offset=".38" stop-color="#f6c94b"/>
+          <stop offset=".72" stop-color="#e09a22"/><stop offset="1" stop-color="#b8701a"/>
+        </linearGradient>
+        <linearGradient id="logo-lapis" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="11.1">
+          <stop offset="0" stop-color="#2a4fb8"/><stop offset="1" stop-color="#0f2259"/>
+        </linearGradient>
+        <linearGradient id="logo-shine" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="#120c05" stroke-width=".9" stroke-linejoin="round"><use href="#logo-glyphs" x="0.3" y="1.1"/><use href="#logo-glyphs" x="0.25" y="0.92"/><use href="#logo-glyphs" x="0.2" y="0.73"/><use href="#logo-glyphs" x="0.15" y="0.55"/><use href="#logo-glyphs" x="0.1" y="0.37"/><use href="#logo-glyphs" x="0.05" y="0.18"/><use href="#logo-glyphs"/></g>
+      <g fill="url(#logo-lapis)"><use href="#logo-glyphs" x="0.3" y="1.1"/><use href="#logo-glyphs" x="0.25" y="0.92"/><use href="#logo-glyphs" x="0.2" y="0.73"/><use href="#logo-glyphs" x="0.15" y="0.55"/><use href="#logo-glyphs" x="0.1" y="0.37"/><use href="#logo-glyphs" x="0.05" y="0.18"/></g>
+      <g clip-path="url(#logo-face)">
+        <use href="#logo-glyphs" fill="#fff8d6"/>
+        <use href="#logo-glyphs" x="0.2" y="0.2" fill="#9c5a14"/>
+        <g clip-path="url(#logo-inner)"><use href="#logo-glyphs" x="-0.2" y="-0.2" fill="url(#logo-gold)"/></g>
+        <rect class="logo-shine" x="-14" y="-2" width="9" height="14" fill="url(#logo-shine)" transform="skewX(-20)"/>
+      </g>
+    </svg><!-- /art:logo --></h1>
+  <a class="get" href="https://github.com/JosephCarmichael/JOJOone/releases/latest/download/JOJOone-friend-pack.zip"
+     aria-label="Download the JOJOone pack for CurseForge"><!-- art:get --><svg class="get-icon" viewBox="0 0 13 19" aria-hidden="true" focusable="false"><path class="px-d" fill="#0f1a3d" d="M4 2h5v1h-5zM3 3h7v1h-7zM2 4h3v1h-3zM8 4h3v1h-3zM2 5h3v1h-3zM8 5h3v1h-3zM2 6h3v1h-3zM8 6h3v1h-3zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h2v1h-2zM9 8h2v1h-2zM2 9h3v1h-3zM8 9h3v1h-3zM2 10h4v1h-4zM7 10h4v1h-4zM3 11h7v1h-7zM4 12h5v1h-5z"/><path class="px-g" fill="#f2c445" d="M4 1h5v1h-5zM2 2h2v1h-2zM9 2h2v1h-2zM2 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM2 11h1v1h-1zM10 11h1v1h-1zM2 12h2v1h-2zM9 12h2v1h-2zM4 13h5v1h-5zM1 17h11v1h-11z"/><path class="px-y" fill="#ffe27a" d="M5 4h3v1h-3zM5 5h3v1h-3zM5 6h3v1h-3zM3 7h7v1h-7zM4 8h5v1h-5zM5 9h3v1h-3zM6 10h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M4 0h5v1h-5zM2 1h2v1h-2zM9 1h2v1h-2zM1 2h1v1h-1zM11 2h1v1h-1zM1 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM12 4h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM12 7h1v1h-1zM0 8h1v1h-1zM12 8h1v1h-1zM0 9h1v1h-1zM12 9h1v1h-1zM0 10h1v1h-1zM12 10h1v1h-1zM1 11h1v1h-1zM11 11h1v1h-1zM1 12h1v1h-1zM11 12h1v1h-1zM2 13h2v1h-2zM9 13h2v1h-2zM4 14h5v1h-5zM0 16h13v1h-13zM0 17h1v1h-1zM12 17h1v1h-1zM0 18h13v1h-13z"/></svg><!-- /art:get --></a>
+</main>
+
+<button class="sound hint" type="button" aria-label="Desert wind" aria-pressed="false"><!-- art:sound-on --><svg class="sound-on" viewBox="0 0 14 10" aria-hidden="true" focusable="false"><path class="px-g" fill="#f2c445" d="M5 1h1v1h-1zM4 2h2v1h-2zM8 2h1v1h-1zM3 3h3v1h-3zM9 3h1v1h-1zM12 3h1v1h-1zM1 4h6v1h-6zM9 4h1v1h-1zM13 4h1v1h-1zM1 5h6v1h-6zM9 5h1v1h-1zM13 5h1v1h-1zM3 6h3v1h-3zM9 6h1v1h-1zM12 6h1v1h-1zM4 7h2v1h-2zM8 7h1v1h-1zM5 8h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M5 0h1v1h-1zM4 1h1v1h-1zM3 2h1v1h-1zM0 3h3v1h-3zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h3v1h-3zM3 7h1v1h-1zM4 8h1v1h-1zM5 9h1v1h-1z"/></svg><!-- /art:sound-on --><!-- art:sound-off --><svg class="sound-off" viewBox="0 0 14 10" aria-hidden="true" focusable="false"><path class="px-g" fill="#f2c445" d="M5 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM8 3h1v1h-1zM12 3h1v1h-1zM1 4h6v1h-6zM9 4h1v1h-1zM11 4h1v1h-1zM1 5h6v1h-6zM10 5h1v1h-1zM3 6h3v1h-3zM9 6h1v1h-1zM11 6h1v1h-1zM4 7h2v1h-2zM8 7h1v1h-1zM12 7h1v1h-1zM5 8h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M5 0h1v1h-1zM4 1h1v1h-1zM3 2h1v1h-1zM0 3h3v1h-3zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h3v1h-3zM3 7h1v1h-1zM4 8h1v1h-1zM5 9h1v1h-1z"/></svg><!-- /art:sound-off --></button>
+
+<script>
+  // Desert wind. Browsers start sound only after a click or key press, so it fades in on the
+  // first one (unless the visitor turned it off on an earlier visit); the speaker toggles it.
+  // The file's two ends are cross-faded into a seamless loop once it is decoded, so it plays
+  // forever without a seam and without timers. Same cross-fade length as site_media.py.
+  (function () {
+    var CROSSFADE = 3, VOLUME = 0.8, KEY = "jojoone-sound";
+    var video = document.querySelector(".bg");
+    var button = document.querySelector(".sound");
+    var file = new Audio().canPlayType('audio/webm; codecs="opus"') ? "media/desert-wind.webm" : "media/desert-wind.m4a";
+    var Context = window.AudioContext || window.webkitAudioContext;
+    var ctx, gain, wanted = false, loading = null;
+    var choice = null;
+    try { choice = localStorage.getItem(KEY); } catch (e) {}
+
+    if (!Context) { button.hidden = true; return; }
+
+    function seamless(buffer) {
+      var n = buffer.length, x = Math.min(Math.round(CROSSFADE * buffer.sampleRate), n >> 2);
+      for (var c = 0; c < buffer.numberOfChannels; c++) {
+        var data = buffer.getChannelData(c);
+        for (var i = 0; i < x; i++) {
+          var p = (i / x) * Math.PI / 2;  // equal power: the wind is noise, so the two ends are uncorrelated
+          data[n - x + i] = data[n - x + i] * Math.cos(p) + data[i] * Math.sin(p);
+        }
+      }
+      return { start: x / buffer.sampleRate, end: n / buffer.sampleRate };
+    }
+
+    function load() {
+      if (!loading) {
+        loading = fetch(file)
+          .then(function (response) { if (!response.ok) throw new Error(response.status); return response.arrayBuffer(); })
+          .then(function (data) { return new Promise(function (ok, fail) { ctx.decodeAudioData(data, ok, fail); }); })
+          .then(function (buffer) {
+            var loop = seamless(buffer), source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            source.loopStart = loop.start;
+            source.loopEnd = loop.end;
+            source.connect(gain);
+            source.start(0, loop.start);
+          });
+        loading.catch(function () { button.hidden = true; });
+      }
+      return loading;
+    }
+
+    function fade(on) {
+      var now = ctx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.setTargetAtTime(on ? VOLUME : 0, now, on ? 0.9 : 0.25);
+    }
+
+    // Called from a click or key press: creating and resuming the context must happen there.
+    function setSound(on) {
+      wanted = on;
+      button.setAttribute("aria-pressed", String(on));
+      button.classList.remove("hint");
+      if (!ctx) {
+        ctx = new Context();
+        gain = ctx.createGain();
+        gain.gain.value = 0;
+        gain.connect(ctx.destination);
+      }
+      if (on) {
+        ctx.resume();
+        load().then(function () { if (wanted && !document.hidden) fade(true); });
+      } else {
+        fade(false);
+        setTimeout(function () { if (!wanted) ctx.suspend(); }, 1500);
+      }
+    }
+
+    function remember(value) {
+      choice = value;
+      try { localStorage.setItem(KEY, value); } catch (e) {}
+    }
+
+    // Every click or key press tries until the sound is actually running: which event counts
+    // as a gesture differs between browsers (iOS only trusts the end of a tap).
+    function gesture(event) {
+      if (video.paused && !("still" in video.dataset)) video.play().catch(function () {});
+      if (button.contains(event.target) || choice === "off") return;  // the speaker's own click decides
+      if (!wanted || ctx.state !== "running") setSound(true);
+    }
+    ["pointerup", "touchend", "click", "keydown"].forEach(function (type) {
+      addEventListener(type, gesture, { capture: true, passive: true });
+    });
+
+    button.addEventListener("click", function () {
+      var on = !wanted;
+      remember(on ? "on" : "off");
+      setSound(on);
+    });
+
+    // Quiet while the tab is hidden; back when it returns.
+    document.addEventListener("visibilitychange", function () {
+      if (!ctx || !wanted) return;
+      if (document.hidden) {
+        fade(false);
+        setTimeout(function () { if (document.hidden) ctx.suspend(); }, 800);
+      } else {
+        ctx.resume();
+        load().then(function () { if (wanted) fade(true); });
+      }
+    });
+
+    if (choice === "off") button.classList.remove("hint");
+  })();
+</script>
+</body>
+</html>
