@@ -23,6 +23,9 @@
   --gold: #f2c445;
   --gold-hi: #ffe27a;
   --glow: rgba(255, 196, 84, .55);
+  --gold-low: #c48a1a;
+  --lapis-deep: #16224a;
+  --outline: #1a1206;
   --ink: rgba(10, 7, 3, .38);
   --rise: cubic-bezier(.2, .7, .2, 1);
 }
@@ -63,14 +66,37 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
 @keyframes bob { 50% { transform: translateY(1px); } }
 .get:focus-visible { box-shadow: 0 0 0 3px var(--night), 0 0 0 5px var(--gold-hi); }
 
-.sound { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
-  display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%;
-  background: var(--ink); cursor: pointer; opacity: .8; transition: opacity .2s, background .2s; animation: rise 1.4s var(--rise) .9s both; }
-.sound:hover, .sound:focus-visible { opacity: 1; background: rgba(10, 7, 3, .6); }
+/* The music control: the speaker, and above it a volume slider that slides out while the
+   pointer is over either, while the keyboard is on them (:focus-visible, so a mouse click
+   does not keep it out), or for a few seconds after a finger taps the speaker. */
+.audio { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; animation: rise 1.4s var(--rise) .9s both; }
+.volume { position: relative; width: 48px; height: 0; margin-bottom: 0; overflow: hidden; opacity: 0;
+  border-radius: 24px; background: rgba(10, 7, 3, .6);
+  transition: height .3s var(--rise), margin-bottom .3s var(--rise), opacity .2s; }
+.audio:hover .volume, .audio:has(:focus-visible) .volume, .audio.open .volume { height: 150px; margin-bottom: 8px; opacity: 1; }
+/* A horizontal range turned upright: dragging up is louder, the arrow keys still work. */
+.volume input { position: absolute; left: 50%; top: 50%; width: 118px; height: 34px; margin: 0; padding: 0;
+  transform: translate(-50%, -50%) rotate(-90deg); background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none; outline: none; }
+.volume input::-webkit-slider-runnable-track { height: 8px; border: 2px solid var(--outline);
+  background: linear-gradient(90deg, var(--gold) var(--level, 70%), var(--lapis-deep) var(--level, 70%)); }
+.volume input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; margin-top: -7px;
+  border: 2px solid var(--outline); border-radius: 0; background: var(--gold-hi); box-shadow: inset -3px -3px 0 var(--gold-low); }
+.volume input::-moz-range-track { height: 8px; border: 2px solid var(--outline); background: var(--lapis-deep); }
+.volume input::-moz-range-progress { height: 8px; border: 2px solid var(--outline); background: var(--gold); }
+.volume input::-moz-range-thumb { width: 14px; height: 14px; border: 2px solid var(--outline); border-radius: 0;
+  background: var(--gold-hi); box-shadow: inset -3px -3px 0 var(--gold-low); }
+.volume input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--gold-hi), inset -3px -3px 0 var(--gold-low); }
+.volume input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--gold-hi), inset -3px -3px 0 var(--gold-low); }
+
+.sound { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--ink); cursor: pointer; opacity: .8; transition: opacity .2s, background .2s; }
+.audio:hover .sound, .sound:focus-visible { opacity: 1; background: rgba(10, 7, 3, .6); }
 .sound:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
 .sound svg { width: 26px; height: auto; }
 .sound[aria-pressed="true"] .sound-off, .sound[aria-pressed="false"] .sound-on { display: none; }
-.sound.hint { animation: rise 1.4s var(--rise) .9s both, hint 2.6s ease-in-out 2.5s infinite; }
+.sound.hint { animation: hint 2.6s ease-in-out 2.5s infinite; }
 @keyframes hint { 50% { box-shadow: 0 0 0 7px rgba(242, 196, 69, .22); } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -132,35 +158,42 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
      aria-label="Download the JOJOone pack for CurseForge"><!-- art:get --><svg class="get-icon" viewBox="0 0 13 19" aria-hidden="true" focusable="false"><path class="px-d" fill="#0f1a3d" d="M4 2h5v1h-5zM3 3h7v1h-7zM2 4h3v1h-3zM8 4h3v1h-3zM2 5h3v1h-3zM8 5h3v1h-3zM2 6h3v1h-3zM8 6h3v1h-3zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h2v1h-2zM9 8h2v1h-2zM2 9h3v1h-3zM8 9h3v1h-3zM2 10h4v1h-4zM7 10h4v1h-4zM3 11h7v1h-7zM4 12h5v1h-5z"/><path class="px-g" fill="#f2c445" d="M4 1h5v1h-5zM2 2h2v1h-2zM9 2h2v1h-2zM2 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM2 11h1v1h-1zM10 11h1v1h-1zM2 12h2v1h-2zM9 12h2v1h-2zM4 13h5v1h-5zM1 17h11v1h-11z"/><path class="px-y" fill="#ffe27a" d="M5 4h3v1h-3zM5 5h3v1h-3zM5 6h3v1h-3zM3 7h7v1h-7zM4 8h5v1h-5zM5 9h3v1h-3zM6 10h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M4 0h5v1h-5zM2 1h2v1h-2zM9 1h2v1h-2zM1 2h1v1h-1zM11 2h1v1h-1zM1 3h1v1h-1zM11 3h1v1h-1zM0 4h1v1h-1zM12 4h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM12 7h1v1h-1zM0 8h1v1h-1zM12 8h1v1h-1zM0 9h1v1h-1zM12 9h1v1h-1zM0 10h1v1h-1zM12 10h1v1h-1zM1 11h1v1h-1zM11 11h1v1h-1zM1 12h1v1h-1zM11 12h1v1h-1zM2 13h2v1h-2zM9 13h2v1h-2zM4 14h5v1h-5zM0 16h13v1h-13zM0 17h1v1h-1zM12 17h1v1h-1zM0 18h13v1h-13z"/></svg><!-- /art:get --></a>
 </main>
 
-<button class="sound hint" type="button" aria-label="Desert wind" aria-pressed="false"><!-- art:sound-on --><svg class="sound-on" viewBox="0 0 14 10" aria-hidden="true" focusable="false"><path class="px-g" fill="#f2c445" d="M5 1h1v1h-1zM4 2h2v1h-2zM8 2h1v1h-1zM3 3h3v1h-3zM9 3h1v1h-1zM12 3h1v1h-1zM1 4h6v1h-6zM9 4h1v1h-1zM13 4h1v1h-1zM1 5h6v1h-6zM9 5h1v1h-1zM13 5h1v1h-1zM3 6h3v1h-3zM9 6h1v1h-1zM12 6h1v1h-1zM4 7h2v1h-2zM8 7h1v1h-1zM5 8h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M5 0h1v1h-1zM4 1h1v1h-1zM3 2h1v1h-1zM0 3h3v1h-3zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h3v1h-3zM3 7h1v1h-1zM4 8h1v1h-1zM5 9h1v1h-1z"/></svg><!-- /art:sound-on --><!-- art:sound-off --><svg class="sound-off" viewBox="0 0 14 10" aria-hidden="true" focusable="false"><path class="px-g" fill="#f2c445" d="M5 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM8 3h1v1h-1zM12 3h1v1h-1zM1 4h6v1h-6zM9 4h1v1h-1zM11 4h1v1h-1zM1 5h6v1h-6zM10 5h1v1h-1zM3 6h3v1h-3zM9 6h1v1h-1zM11 6h1v1h-1zM4 7h2v1h-2zM8 7h1v1h-1zM12 7h1v1h-1zM5 8h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M5 0h1v1h-1zM4 1h1v1h-1zM3 2h1v1h-1zM0 3h3v1h-3zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h3v1h-3zM3 7h1v1h-1zM4 8h1v1h-1zM5 9h1v1h-1z"/></svg><!-- /art:sound-off --></button>
+<div class="audio" data-loop-start="1" data-loop-seconds="83.478270833">
+  <div class="volume"><input type="range" min="0" max="100" step="1" value="70" aria-label="Music volume"></div>
+  <button class="sound hint" type="button" aria-label="Music" aria-pressed="false"><!-- art:sound-on --><svg class="sound-on" viewBox="0 0 14 10" aria-hidden="true" focusable="false"><path class="px-g" fill="#f2c445" d="M5 1h1v1h-1zM4 2h2v1h-2zM8 2h1v1h-1zM3 3h3v1h-3zM9 3h1v1h-1zM12 3h1v1h-1zM1 4h6v1h-6zM9 4h1v1h-1zM13 4h1v1h-1zM1 5h6v1h-6zM9 5h1v1h-1zM13 5h1v1h-1zM3 6h3v1h-3zM9 6h1v1h-1zM12 6h1v1h-1zM4 7h2v1h-2zM8 7h1v1h-1zM5 8h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M5 0h1v1h-1zM4 1h1v1h-1zM3 2h1v1h-1zM0 3h3v1h-3zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h3v1h-3zM3 7h1v1h-1zM4 8h1v1h-1zM5 9h1v1h-1z"/></svg><!-- /art:sound-on --><!-- art:sound-off --><svg class="sound-off" viewBox="0 0 14 10" aria-hidden="true" focusable="false"><path class="px-g" fill="#f2c445" d="M5 1h1v1h-1zM4 2h2v1h-2zM3 3h3v1h-3zM8 3h1v1h-1zM12 3h1v1h-1zM1 4h6v1h-6zM9 4h1v1h-1zM11 4h1v1h-1zM1 5h6v1h-6zM10 5h1v1h-1zM3 6h3v1h-3zM9 6h1v1h-1zM11 6h1v1h-1zM4 7h2v1h-2zM8 7h1v1h-1zM12 7h1v1h-1zM5 8h1v1h-1z"/><path class="px-k" fill="#1a1206" d="M5 0h1v1h-1zM4 1h1v1h-1zM3 2h1v1h-1zM0 3h3v1h-3zM0 4h1v1h-1zM0 5h1v1h-1zM0 6h3v1h-3zM3 7h1v1h-1zM4 8h1v1h-1zM5 9h1v1h-1z"/></svg><!-- /art:sound-off --></button>
+</div>
 
 <script>
-  // Desert wind. Browsers start sound only after a click or key press, so it fades in on the
-  // first one (unless the visitor turned it off on an earlier visit); the speaker toggles it.
-  // The file's two ends are cross-faded into a seamless loop once it is decoded, so it plays
-  // forever without a seam and without timers. Same cross-fade length as site_media.py.
+  // The music. Browsers start sound only after a click or key press, so it fades in on the
+  // first one (unless the visitor turned it off on an earlier visit). The speaker turns it on
+  // and off, and the slider above it sets the volume; both are remembered. The file carries
+  // a second of the loop's end before it and of its start after it, so looping between the
+  // two data-loop points is seamless whatever padding the codec added (site_media.py).
   (function () {
-    var CROSSFADE = 3, VOLUME = 0.8, KEY = "jojoone-sound";
+    var KEY = "jojoone-sound", VOLUME_KEY = "jojoone-volume", DEFAULT_VOLUME = 70;
     var video = document.querySelector(".bg");
-    var button = document.querySelector(".sound");
-    var file = new Audio().canPlayType('audio/webm; codecs="opus"') ? "media/desert-wind.webm" : "media/desert-wind.m4a";
+    var panel = document.querySelector(".audio");
+    var button = panel.querySelector(".sound");
+    var slider = panel.querySelector("input");
+    var loopStart = parseFloat(panel.dataset.loopStart), loopSeconds = parseFloat(panel.dataset.loopSeconds);
+    var file = new Audio().canPlayType('audio/webm; codecs="opus"') ? "media/desert-music.webm" : "media/desert-music.m4a";
     var Context = window.AudioContext || window.webkitAudioContext;
-    var ctx, gain, wanted = false, loading = null;
-    var choice = null;
-    try { choice = localStorage.getItem(KEY); } catch (e) {}
+    var ctx, gain, wanted = false, loading = null, pointer = "mouse", closing;
+    var choice = read(KEY), volume = parseInt(read(VOLUME_KEY), 10);
+    if (!(volume >= 0 && volume <= 100)) volume = DEFAULT_VOLUME;
 
-    if (!Context) { button.hidden = true; return; }
+    if (!Context) { panel.hidden = true; return; }
 
-    function seamless(buffer) {
-      var n = buffer.length, x = Math.min(Math.round(CROSSFADE * buffer.sampleRate), n >> 2);
-      for (var c = 0; c < buffer.numberOfChannels; c++) {
-        var data = buffer.getChannelData(c);
-        for (var i = 0; i < x; i++) {
-          var p = (i / x) * Math.PI / 2;  // equal power: the wind is noise, so the two ends are uncorrelated
-          data[n - x + i] = data[n - x + i] * Math.cos(p) + data[i] * Math.sin(p);
-        }
-      }
-      return { start: x / buffer.sampleRate, end: n / buffer.sampleRate };
+    function read(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function write(key, value) { try { localStorage.setItem(key, String(value)); } catch (e) {} }
+
+    // Squared, so equal moves of the slider sound like equal steps in loudness.
+    function level() { return wanted && !document.hidden ? Math.pow(volume / 100, 2) : 0; }
+
+    function show() {
+      button.setAttribute("aria-pressed", String(wanted && volume > 0));
+      slider.value = volume;
+      slider.style.setProperty("--level", volume + "%");
     }
 
     function load() {
@@ -169,80 +202,101 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
           .then(function (response) { if (!response.ok) throw new Error(response.status); return response.arrayBuffer(); })
           .then(function (data) { return new Promise(function (ok, fail) { ctx.decodeAudioData(data, ok, fail); }); })
           .then(function (buffer) {
-            var loop = seamless(buffer), source = ctx.createBufferSource();
+            var source = ctx.createBufferSource();
             source.buffer = buffer;
             source.loop = true;
-            source.loopStart = loop.start;
-            source.loopEnd = loop.end;
+            source.loopStart = loopStart;
+            source.loopEnd = loopStart + loopSeconds;
             source.connect(gain);
-            source.start(0, loop.start);
+            source.start(0, loopStart);
           });
-        loading.catch(function () { button.hidden = true; });
+        loading.catch(function () { panel.hidden = true; });
       }
       return loading;
     }
 
-    function fade(on) {
+    function fade(seconds) {
       var now = ctx.currentTime;
       gain.gain.cancelScheduledValues(now);
       gain.gain.setValueAtTime(gain.gain.value, now);
-      gain.gain.setTargetAtTime(on ? VOLUME : 0, now, on ? 0.9 : 0.25);
+      gain.gain.setTargetAtTime(level(), now, seconds);
     }
 
-    // Called from a click or key press: creating and resuming the context must happen there.
-    function setSound(on) {
-      wanted = on;
-      button.setAttribute("aria-pressed", String(on));
+    // Called from a click, key press or slider move: creating and resuming the context must happen there.
+    function apply(seconds) {
       button.classList.remove("hint");
+      show();
       if (!ctx) {
         ctx = new Context();
         gain = ctx.createGain();
         gain.gain.value = 0;
         gain.connect(ctx.destination);
       }
-      if (on) {
+      if (wanted) {
         ctx.resume();
-        load().then(function () { if (wanted && !document.hidden) fade(true); });
+        load().then(function () { fade(seconds); });
       } else {
-        fade(false);
+        fade(0.25);
         setTimeout(function () { if (!wanted) ctx.suspend(); }, 1500);
       }
     }
 
-    function remember(value) {
-      choice = value;
-      try { localStorage.setItem(KEY, value); } catch (e) {}
-    }
-
-    // Every click or key press tries until the sound is actually running: which event counts
+    // Every click or key press tries until the music is actually running: which event counts
     // as a gesture differs between browsers (iOS only trusts the end of a tap).
     function gesture(event) {
       if (video.paused && !("still" in video.dataset)) video.play().catch(function () {});
-      if (button.contains(event.target) || choice === "off") return;  // the speaker's own click decides
-      if (!wanted || ctx.state !== "running") setSound(true);
+      if (panel.contains(event.target) || choice === "off") return;  // the controls decide for themselves
+      if (!wanted || ctx.state !== "running") {
+        wanted = true;
+        apply(0.9);
+      }
     }
     ["pointerup", "touchend", "click", "keydown"].forEach(function (type) {
       addEventListener(type, gesture, { capture: true, passive: true });
     });
 
+    // Fingers cannot hover: a tap on the speaker also slides the volume out for a few seconds.
+    function open() {
+      panel.classList.add("open");
+      clearTimeout(closing);
+      closing = setTimeout(function () { panel.classList.remove("open"); }, 4000);
+    }
+    addEventListener("pointerdown", function (event) {
+      pointer = event.pointerType;
+      if (!panel.contains(event.target)) panel.classList.remove("open");
+    }, true);
+
     button.addEventListener("click", function () {
-      var on = !wanted;
-      remember(on ? "on" : "off");
-      setSound(on);
+      wanted = !(wanted && volume > 0);
+      if (wanted && volume === 0) write(VOLUME_KEY, volume = DEFAULT_VOLUME);
+      write(KEY, choice = wanted ? "on" : "off");
+      apply(0.4);
+      if (pointer === "touch") open();
+    });
+
+    slider.addEventListener("input", function () {
+      write(VOLUME_KEY, volume = parseInt(slider.value, 10));
+      if (volume > 0 && !wanted) {
+        wanted = true;
+        write(KEY, choice = "on");
+      }
+      apply(0.05);
+      if (pointer === "touch") open();
     });
 
     // Quiet while the tab is hidden; back when it returns.
     document.addEventListener("visibilitychange", function () {
       if (!ctx || !wanted) return;
       if (document.hidden) {
-        fade(false);
+        fade(0.25);
         setTimeout(function () { if (document.hidden) ctx.suspend(); }, 800);
       } else {
         ctx.resume();
-        load().then(function () { if (wanted) fade(true); });
+        load().then(function () { fade(0.6); });
       }
     });
 
+    show();
     if (choice === "off") button.classList.remove("hint");
   })();
 </script>
