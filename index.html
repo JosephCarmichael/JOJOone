@@ -96,8 +96,8 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
 .sound:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
 .sound svg { width: 26px; height: auto; }
 .sound[aria-pressed="true"] .sound-off, .sound[aria-pressed="false"] .sound-on { display: none; }
-.sound.hint { animation: hint 2.6s ease-in-out 2.5s infinite; }
-@keyframes hint { 50% { box-shadow: 0 0 0 7px rgba(242, 196, 69, .22); } }
+.sound.hint { opacity: 1; animation: hint 2.2s ease-in-out 1.5s infinite; }
+@keyframes hint { 50% { box-shadow: 0 0 0 8px rgba(242, 196, 69, .32), 0 0 18px 4px rgba(242, 196, 69, .35); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -164,9 +164,11 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
 </div>
 
 <script>
-  // The music. Browsers start sound only after a click or key press, so it fades in on the
-  // first one (unless the visitor turned it off on an earlier visit). The speaker turns it on
-  // and off, and the slider above it sets the volume; both are remembered. The file carries
+  // The music. It is loaded and started as soon as the page opens (unless the visitor turned
+  // it off on an earlier visit), so browsers that allow sound without a click play it at once.
+  // The rest (by default all of them) hold it until the first click, tap or key press anywhere,
+  // which then starts it instantly. The speaker shows whether it is actually playing and turns
+  // it on and off; the slider above it sets the volume; both are remembered. The file carries
   // a second of the loop's end before it and of its start after it, so looping between the
   // two data-loop points is seamless whatever padding the codec added (site_media.py).
   (function () {
@@ -178,8 +180,9 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
     var loopStart = parseFloat(panel.dataset.loopStart), loopSeconds = parseFloat(panel.dataset.loopSeconds);
     var file = new Audio().canPlayType('audio/webm; codecs="opus"') ? "media/desert-music.webm" : "media/desert-music.m4a";
     var Context = window.AudioContext || window.webkitAudioContext;
-    var ctx, gain, wanted = false, loading = null, pointer = "mouse", closing;
-    var choice = read(KEY), volume = parseInt(read(VOLUME_KEY), 10);
+    var ctx, gain, loading = null, pointer = "mouse", closing;
+    var volume = parseInt(read(VOLUME_KEY), 10);
+    var wanted = read(KEY) !== "off";
     if (!(volume >= 0 && volume <= 100)) volume = DEFAULT_VOLUME;
 
     if (!Context) { panel.hidden = true; return; }
@@ -187,13 +190,29 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
     function read(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
     function write(key, value) { try { localStorage.setItem(key, String(value)); } catch (e) {} }
 
+    // Playing, as opposed to wanted but still held back by the browser.
+    function audible() { return wanted && volume > 0 && !!ctx && ctx.state === "running"; }
+
     // Squared, so equal moves of the slider sound like equal steps in loudness.
     function level() { return wanted && !document.hidden ? Math.pow(volume / 100, 2) : 0; }
 
     function show() {
-      button.setAttribute("aria-pressed", String(wanted && volume > 0));
+      var on = audible();
+      button.setAttribute("aria-pressed", String(on));
+      button.classList.toggle("hint", wanted && volume > 0 && !on);  // waiting for a click to be allowed to play
       slider.value = volume;
       slider.style.setProperty("--level", volume + "%");
+    }
+
+    function context() {
+      if (!ctx) {
+        ctx = new Context();
+        gain = ctx.createGain();
+        gain.gain.value = 0;
+        gain.connect(ctx.destination);
+        ctx.onstatechange = show;
+      }
+      return ctx;
     }
 
     function load() {
@@ -222,36 +241,29 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
       gain.gain.setTargetAtTime(level(), now, seconds);
     }
 
-    // Called from a click, key press or slider move: creating and resuming the context must happen there.
+    // Start or stop. From a click, key press or slider move the browser lets the context run;
+    // at page load it runs only where the browser allows sound without one.
     function apply(seconds) {
-      button.classList.remove("hint");
-      show();
-      if (!ctx) {
-        ctx = new Context();
-        gain = ctx.createGain();
-        gain.gain.value = 0;
-        gain.connect(ctx.destination);
-      }
+      context();
       if (wanted) {
-        ctx.resume();
+        var resumed = ctx.resume();
+        if (resumed && resumed.catch) resumed.catch(function () {});
         load().then(function () { fade(seconds); });
       } else {
         fade(0.25);
         setTimeout(function () { if (!wanted) ctx.suspend(); }, 1500);
       }
+      show();
     }
 
-    // Every click or key press tries until the music is actually running: which event counts
-    // as a gesture differs between browsers (iOS only trusts the end of a tap).
+    // Every click, tap or key press tries until the music is actually running: which event
+    // counts as a gesture differs between browsers (iOS only trusts the end of a tap).
     function gesture(event) {
       if (video.paused && !("still" in video.dataset)) video.play().catch(function () {});
-      if (panel.contains(event.target) || choice === "off") return;  // the controls decide for themselves
-      if (!wanted || ctx.state !== "running") {
-        wanted = true;
-        apply(0.9);
-      }
+      if (panel.contains(event.target) || !wanted || audible()) return;  // the controls decide for themselves
+      apply(0.9);
     }
-    ["pointerup", "touchend", "click", "keydown"].forEach(function (type) {
+    ["pointerdown", "pointerup", "touchend", "click", "keydown"].forEach(function (type) {
       addEventListener(type, gesture, { capture: true, passive: true });
     });
 
@@ -266,10 +278,11 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
       if (!panel.contains(event.target)) panel.classList.remove("open");
     }, true);
 
+    // What the speaker shows decides: one that looks silent turns the music on.
     button.addEventListener("click", function () {
-      wanted = !(wanted && volume > 0);
+      wanted = !audible();
       if (wanted && volume === 0) write(VOLUME_KEY, volume = DEFAULT_VOLUME);
-      write(KEY, choice = wanted ? "on" : "off");
+      write(KEY, wanted ? "on" : "off");
       apply(0.4);
       if (pointer === "touch") open();
     });
@@ -278,7 +291,7 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
       write(VOLUME_KEY, volume = parseInt(slider.value, 10));
       if (volume > 0 && !wanted) {
         wanted = true;
-        write(KEY, choice = "on");
+        write(KEY, "on");
       }
       apply(0.05);
       if (pointer === "touch") open();
@@ -291,13 +304,12 @@ h1 { margin: 0; line-height: 0; animation-delay: .25s; }
         fade(0.25);
         setTimeout(function () { if (document.hidden) ctx.suspend(); }, 800);
       } else {
-        ctx.resume();
-        load().then(function () { fade(0.6); });
+        apply(0.6);
       }
     });
 
     show();
-    if (choice === "off") button.classList.remove("hint");
+    if (wanted) apply(1.2);
   })();
 </script>
 </body>
